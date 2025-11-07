@@ -412,7 +412,7 @@ in
       documentation = [ "https://immich.app/docs" ];
     };
 
-    systemd.services.immich-server = {
+    systemd.services.immich-server = rec {
       description = "Immich backend server (Self-hosted photo and video backup solution)";
       requires = lib.mkIf cfg.database.enable [ "postgresql.target" ];
       after = [ "network.target" ] ++ lib.optionals cfg.database.enable [ "postgresql.target" ];
@@ -426,14 +426,14 @@ in
 
       preStart = mkIf (cfg.settings != null) (
         ''
-          cat '${format.generate "immich-config.json" cfg.settings}' > /run/immich/config.json
+          cat '${format.generate "immich-config.json" cfg.settings}' > /run/${serviceConfig.RuntimeDirectory}/config.json
         ''
         + lib.concatStrings (
           lib.mapAttrsToListRecursive (attrPath: _: ''
             tmp="$(mktemp)"
             ${lib.getExe pkgs.jq} --rawfile secret "$CREDENTIALS_DIRECTORY/${attrPathToIndex attrPath}" \
-              '${attrPathToIndex attrPath} = ($secret | rtrimstr("\n"))' /run/immich/config.json > "$tmp"
-            mv "$tmp" /run/immich/config.json
+              '${attrPathToIndex attrPath} = ($secret | rtrimstr("\n"))' /run/${serviceConfig.RuntimeDirectory}/config.json > "$tmp"
+            mv "$tmp" /run/${serviceConfig.RuntimeDirectory}/config.json
           '') cfg.secretSettings
         )
       );
