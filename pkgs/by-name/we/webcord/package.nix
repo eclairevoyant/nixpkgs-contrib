@@ -1,5 +1,6 @@
 {
   lib,
+  stdenv,
   buildNpmPackage,
   fetchFromGitHub,
   copyDesktopItems,
@@ -39,6 +40,10 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
     rm -rf .husky
   '';
 
+  preBuild = lib.optionalString stdenv.hostPlatform.isDarwin ''
+    npm run package
+  '';
+
   # override installPhase so we can copy the only folders that matter
   installPhase =
     let
@@ -54,6 +59,8 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
       cp -r app node_modules sources package.json $out/lib/node_modules/webcord/
 
       install -Dm644 sources/assets/icons/app.png $out/share/icons/hicolor/256x256/apps/webcord.png
+    ''
+    + lib.optionalString stdenv.hostPlatform.isLinux ''
 
       # Add xdg-utils to path via suffix, per PR #181171
       makeWrapper '${lib.getExe electron_43}' $out/bin/webcord \
@@ -62,6 +69,10 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
         --add-flags $out/lib/node_modules/webcord/
 
       runHook postInstall
+    ''
+    + lib.optionalString stdenv.hostPlatform.isDarwin ''
+      ls out
+      exit 1
     '';
 
   desktopItems = [
@@ -91,6 +102,6 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
       huantian
       NotAShelf
     ];
-    platforms = lib.platforms.linux;
+    platforms = with lib.platforms; linux ++ darwin;
   };
 }
