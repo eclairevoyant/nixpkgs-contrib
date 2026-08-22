@@ -58,21 +58,22 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
       mkdir -p $out/lib/node_modules/webcord
       cp -r app node_modules sources package.json $out/lib/node_modules/webcord/
 
-      install -Dm644 sources/assets/icons/app.png $out/share/icons/hicolor/256x256/apps/webcord.png
-    ''
-    + lib.optionalString stdenv.hostPlatform.isLinux ''
-
       # Add xdg-utils to path via suffix, per PR #181171
       makeWrapper '${lib.getExe electron_43}' $out/bin/webcord \
         --suffix PATH : "${binPath}" \
         --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true}}" \
         --add-flags $out/lib/node_modules/webcord/
-
-      runHook postInstall
+    ''
+    + lib.optionalString stdenv.hostPlatform.isLinux ''
+      install -Dm644 sources/assets/icons/app.png $out/share/icons/hicolor/256x256/apps/webcord.png
     ''
     + lib.optionalString stdenv.hostPlatform.isDarwin ''
-      ls out
-      exit 1
+      mkdir -p $out/Applications/WebCord.app/Contents/MacOS
+      ln -s $out/bin/webcord $out/Applications/WebCord.app/Contents/MacOS/WebCord
+      install -Dm644 sources/assets/icons/app.icns -t $out/Applications/WebCord.app/Contents/Resources/
+    ''
+    + ''
+      runHook postInstall
     '';
 
   desktopItems = [
