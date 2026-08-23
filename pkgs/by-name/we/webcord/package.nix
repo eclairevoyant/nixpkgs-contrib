@@ -35,9 +35,12 @@ buildNpmPackage.override { nodejs = nodejs_22; } rec {
   # we don't need it anyways since we wrap the program with our nixpkgs electron
   env.ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
 
-  # remove husky commit hooks, errors and aren't needed for packaging
   postPatch = ''
+    # remove husky commit hooks, errors and aren't needed for packaging
     rm -rf .husky
+
+    substituteInPlace sources/code/build/forge.mts \
+      --replace-fail 'osxSign: true' ""
   '';
 
   preBuild = lib.optionalString stdenv.hostPlatform.isDarwin ''
