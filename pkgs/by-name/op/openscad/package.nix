@@ -31,7 +31,6 @@
   wrapGAppsHook3,
   cairo,
   callPackage,
-  openscad,
   runCommand,
   versionCheckHook,
   openscadPackages,
@@ -39,80 +38,14 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "openscad";
-  version = "2021.01";
+  version = "2026.11-RC0";
 
   src = fetchFromGitHub {
     owner = "openscad";
     repo = "openscad";
     rev = "${finalAttrs.pname}-${finalAttrs.version}";
-    sha256 = "sha256-2tOLqpFt5klFPxHNONnHVzBKEFWn4+ufx/MU+eYbliA=";
+    hash = "sha256-CO6DSWHveuVpYo99d/imvgTR28VsPnquTQJMgDj+9Qs=";
   };
-
-  patches = [
-    (fetchpatch {
-      name = "CVE-2022-0496.patch";
-      url = "https://github.com/openscad/openscad/commit/00a4692989c4e2f191525f73f24ad8727bacdf41.patch";
-      sha256 = "sha256-q3SLj2b5aM/IQ8vIDj4iVcwCajgyJ5juNV/KN35uxfI=";
-    })
-    (fetchpatch {
-      name = "CVE-2022-0497.patch";
-      url = "https://github.com/openscad/openscad/commit/84addf3c1efbd51d8ff424b7da276400bbfa1a4b.patch";
-      sha256 = "sha256-KNEVu10E2d4G2x+FJcuHo2tjD8ygMRuhUcW9NbN98bM=";
-    })
-    (fetchpatch {
-      # needed for cgal_5
-      name = "cgalutils-tess.cc-cgal-5.patch";
-      url = "https://github.com/openscad/openscad/commit/3a81c1fb9b663ebbedd6eb044e7276357b1f30a1.patch";
-      hash = "sha256-JdBznXkewx5ybY92Ss0h7UnMZ7d3IQbFRaDCDjb1bRA=";
-    })
-    (fetchpatch {
-      # needed for cgal_5
-      name = "cgalutils-tess.cc-cgal-5_4.patch";
-      url = "https://github.com/openscad/openscad/commit/71f2831c0484c3f35cbf44e1d1dc2c857384100b.patch";
-      hash = "sha256-Fu8dnjNIwZKCI6ukOeHYK8NiJwoA0XtqT8dg8sVevG8=";
-    })
-    (fetchpatch {
-      # needed for cgal_5. Removes dead code
-      name = "cgalutils-polyhedron.cc-cgal-5_3.patch";
-      url = "https://github.com/openscad/openscad/commit/cc49ad8dac24309f5452d5dea9abd406615a52d9.patch";
-      hash = "sha256-B3i+o6lR5osRcVXTimDZUFQmm12JhmbFgG9UwOPebF4=";
-    })
-    (fetchpatch {
-      name = "fix-application-icon-not-shown-on-wayland.patch";
-      url = "https://github.com/openscad/openscad/commit/5ea83e5117f5f3ac2197c63db69f523721b8fa85.patch";
-      hash = "sha256-nfeUv0R+J95fyqnVC0HNeBVZnxVoisY1pcdII82qUSU=";
-
-      # upstream's formatting conventions changed between 2021 and this patch
-      postFetch = ''
-        sed -i 's/& / \&/g;s/\*\*/\0 /g;s/^\(.\)  /\1\t/' "$out"
-      '';
-    })
-    # unfortunately the archlinux patch does not apply cleanly
-    # source: https://gitlab.archlinux.org/archlinux/packaging/packages/openscad/-/raw/ecc27e16ae6fee51c6806690d76f9ba326af79c1/boost-1.89.patch
-    ./boost-1.89.patch
-  ]
-  ++ lib.optionals stdenv.hostPlatform.isDarwin [
-    # ref. https://github.com/openscad/openscad/pull/4013 merged upstream
-    (fetchpatch {
-      name = "mem_fun-to-mem_fn.patch";
-      url = "https://github.com/openscad/openscad/commit/c9a1abbedfbf6dda9a23d3ad5844d11e5278a928.patch";
-      hash = "sha256-Man9ledRREb7U+2UOQ0VkpiwbYQjyVOY21YaRFObZc8=";
-    })
-
-  ];
-
-  postPatch = ''
-    substituteInPlace src/FileModule.cc \
-      --replace-fail 'fs::is_regular' 'fs::is_regular_file'
-
-    substituteInPlace src/openscad.cc \
-      --replace-fail 'boost::join' 'boost::algorithm::join'
-  ''
-  # ref. https://github.com/openscad/openscad/pull/4253 merged upstream but does not apply
-  + lib.optionalString stdenv.hostPlatform.isDarwin ''
-    substituteInPlace src/FreetypeRenderer.h \
-      --replace-fail ": public std::unary_function<const GlyphData *, void>" ""
-  '';
 
   nativeBuildInputs = [
     bison
@@ -200,10 +133,11 @@ stdenv.mkDerivation (finalAttrs: {
       interested in creating computer-animated movies.
     '';
     homepage = "https://openscad.org/";
-    license = lib.licenses.gpl2;
+    license = lib.licenses.gpl2Plus;
     platforms = lib.platforms.unix;
     maintainers = with lib.maintainers; [
       bjornfor
+      eclairevoyant
       raskin
       xoconoch
     ];

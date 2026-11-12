@@ -55,10 +55,10 @@ let
     )
   );
 in
-clangStdenv.mkDerivation rec {
+clangStdenv.mkDerivation (finalAttrs: {
   pname = "openscad-unstable";
-  unstable_date = "2026-07-20";
-  version = "2021.01-unstable-${unstable_date}";
+  version = "2026.11-RC0";
+
   src = fetchFromGitHub {
     owner = "openscad";
     repo = "openscad";
@@ -115,6 +115,7 @@ clangStdenv.mkDerivation rec {
     libGLU
   ]
   ++ lib.optional clangStdenv.hostPlatform.isDarwin libsForQt5.qtmacextras;
+
   cmakeFlags = [
     "-DEXPERIMENTAL=ON" # enable experimental options
     "-DSNAPSHOT=ON" # nightly icons
@@ -122,7 +123,7 @@ clangStdenv.mkDerivation rec {
     "-DUSE_BUILTIN_MANIFOLD=OFF"
     "-DUSE_BUILTIN_CLIPPER2=OFF"
     # Derive version from our unstable date
-    "-DOPENSCAD_VERSION='${builtins.replaceStrings [ "-" ] [ "." ] unstable_date}-unstable'"
+    "-DOPENSCAD_VERSION='${finalAttrs.version}'"
     "-DCMAKE_UNITY_BUILD=OFF" # broken compile with unity
     # IPO
     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON"
@@ -162,6 +163,8 @@ clangStdenv.mkDerivation rec {
     ln -s $out/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD $out/bin/openscad-unstable
   '';
 
+  dontFixup = true;
+
   nativeCheckInputs = [
     mesa.llvmpipeHook
     ctestCheckHook
@@ -195,10 +198,11 @@ clangStdenv.mkDerivation rec {
     license = lib.licenses.gpl3;
     platforms = lib.platforms.unix;
     maintainers = with lib.maintainers; [
+      eclairevoyant
       hzeller
       pca006132
       raskin
     ];
     mainProgram = "openscad";
   };
-}
+})
